@@ -1,3 +1,5 @@
+import json
+
 class Cliente:
     def __init__(self, id, nome, email, fone):
         self.id = id
@@ -19,109 +21,225 @@ class Produto:
         self.estoque = estoque
         self.idCategoria = idCategoria
 
-class ClienteDAO:
-    clientes = []
-    proximo_id = 1
 
-    @staticmethod
-    def inserir(cliente):
-        cliente.id = ClienteDAO.proximo_id
-        ClienteDAO.clientes.append(cliente)
-        ClienteDAO.proximo_id += 1
+class ClienteDAO:
+    arquivo = "clientes.json"
 
     @staticmethod
     def listar():
-        return ClienteDAO.clientes
+        try:
+            with open(ClienteDAO.arquivo, "r", encoding="utf-8") as arquivo:
+                dados = json.load(arquivo)
+
+            return [
+                Cliente(c["id"], c["nome"], c["email"], c["fone"])
+                for c in dados
+            ]
+
+        except FileNotFoundError:
+            return []
+
+    @staticmethod
+    def salvar(clientes):
+        dados = []
+
+        for cliente in clientes:
+            dados.append({
+                "id": cliente.id,
+                "nome": cliente.nome,
+                "email": cliente.email,
+                "fone": cliente.fone
+            })
+
+        with open(ClienteDAO.arquivo, "w", encoding="utf-8") as arquivo:
+            json.dump(dados, arquivo, indent=4, ensure_ascii=False)
+
+    @staticmethod
+    def inserir(cliente):
+        clientes = ClienteDAO.listar()
+
+        cliente.id = max(
+            (c.id for c in clientes), default=0
+        ) + 1
+
+        clientes.append(cliente)
+        ClienteDAO.salvar(clientes)
 
     @staticmethod
     def listar_id(id):
-        for cliente in ClienteDAO.clientes:
+        for cliente in ClienteDAO.listar():
             if cliente.id == id:
                 return cliente
+
         return None
 
     @staticmethod
     def atualizar(cliente):
-        for i, c in enumerate(ClienteDAO.clientes):
+        clientes = ClienteDAO.listar()
+
+        for i, c in enumerate(clientes):
             if c.id == cliente.id:
-                ClienteDAO.clientes[i] = cliente
+                clientes[i] = cliente
+                ClienteDAO.salvar(clientes)
                 return
 
     @staticmethod
     def excluir(id):
-        cliente = ClienteDAO.listar_id(id)
-        if cliente is not None:
-            ClienteDAO.clientes.remove(cliente)
+        clientes = ClienteDAO.listar()
+
+        for cliente in clientes:
+            if cliente.id == id:
+                clientes.remove(cliente)
+                ClienteDAO.salvar(clientes)
+                return
+
 
 class CategoriaDAO:
-    categorias = []
-    proximo_id = 1
-
-    @staticmethod
-    def inserir(categoria):
-        categoria.id = CategoriaDAO.proximo_id
-        CategoriaDAO.categorias.append(categoria)
-        CategoriaDAO.proximo_id += 1
+    arquivo = "categorias.json"
 
     @staticmethod
     def listar():
-        return CategoriaDAO.categorias
+        try:
+            with open(CategoriaDAO.arquivo, "r", encoding="utf-8") as arquivo:
+                dados = json.load(arquivo)
+
+            return [
+                Categoria(c["id"], c["descricao"])
+                for c in dados
+            ]
+
+        except FileNotFoundError:
+            return []
+
+    @staticmethod
+    def salvar(categorias):
+        dados = []
+
+        for categoria in categorias:
+            dados.append({
+                "id": categoria.id,
+                "descricao": categoria.descricao
+            })
+
+        with open(CategoriaDAO.arquivo, "w", encoding="utf-8") as arquivo:
+            json.dump(dados, arquivo, indent=4, ensure_ascii=False)
+
+    @staticmethod
+    def inserir(categoria):
+        categorias = CategoriaDAO.listar()
+
+        categoria.id = max(
+            (c.id for c in categorias), default=0
+        ) + 1
+
+        categorias.append(categoria)
+        CategoriaDAO.salvar(categorias)
 
     @staticmethod
     def listar_id(id):
-        for categoria in CategoriaDAO.categorias:
+        for categoria in CategoriaDAO.listar():
             if categoria.id == id:
                 return categoria
+
         return None
 
     @staticmethod
     def atualizar(categoria):
-        for i, c in enumerate(CategoriaDAO.categorias):
+        categorias = CategoriaDAO.listar()
+
+        for i, c in enumerate(categorias):
             if c.id == categoria.id:
-                CategoriaDAO.categorias[i] = categoria
+                categorias[i] = categoria
+                CategoriaDAO.salvar(categorias)
                 return
 
     @staticmethod
     def excluir(id):
-        Categoria = CategoriaDAO.listar_id(id)
-        if Categoria is not None:
-            CategoriaDAO.categorias.remove(Categoria)
+        categorias = CategoriaDAO.listar()
+
+        for categoria in categorias:
+            if categoria.id == id:
+                categorias.remove(categoria)
+                CategoriaDAO.salvar(categorias)
+                return
+
+
 
 
 class ProdutoDAO:
-    produtos = []
-    proximo_id = 1
-
-    @staticmethod
-    def inserir(produto):
-        produto.id = ProdutoDAO.proximo_id
-        ProdutoDAO.produtos.append(produto)
-        ProdutoDAO.proximo_id += 1
+    arquivo = "produtos.json"
 
     @staticmethod
     def listar():
-        return ProdutoDAO.produtos
+        try:
+            with open(ProdutoDAO.arquivo, "r", encoding="utf-8") as arquivo:
+                dados = json.load(arquivo)
+
+            return [
+                Produto(
+                    p["id"],
+                    p["descricao"],
+                    p["preco"],
+                    p["estoque"],
+                    p["idCategoria"]
+                )
+                for p in dados
+            ]
+
+        except FileNotFoundError:
+            return []
+
+    @staticmethod
+    def salvar(produtos):
+        dados = []
+
+        for produto in produtos:
+            dados.append({
+                "id": produto.id,
+                "descricao": produto.descricao,
+                "preco": produto.preco,
+                "estoque": produto.estoque,
+                "idCategoria": produto.idCategoria
+            })
+
+        with open(ProdutoDAO.arquivo, "w", encoding="utf-8") as arquivo:
+            json.dump(dados, arquivo, indent=4, ensure_ascii=False)
+
+    @staticmethod
+    def inserir(produto):
+        produtos = ProdutoDAO.listar()
+
+        produto.id = max(
+            (p.id for p in produtos), default=0
+        ) + 1
+
+        produtos.append(produto)
+        ProdutoDAO.salvar(produtos)
 
     @staticmethod
     def listar_id(id):
-        for produto in ProdutoDAO.produtos:
+        for produto in ProdutoDAO.listar():
             if produto.id == id:
                 return produto
+
         return None
 
     @staticmethod
     def atualizar(produto):
-        for i, p in enumerate(ProdutoDAO.produtos):
+        produtos = ProdutoDAO.listar()
+
+        for i, p in enumerate(produtos):
             if p.id == produto.id:
-                ProdutoDAO.produtos[i] = produto
+                produtos[i] = produto
+                ProdutoDAO.salvar(produtos)
                 return
 
     @staticmethod
     def excluir(id):
-        produto = ProdutoDAO.listar_id(id)
-        if produto is not None:
-            ProdutoDAO.produtos.remove(produto)
+        produtos = ProdutoDAO.listar()
 
-
-
-
+        for produto in produtos:
+            if produto.id == id:
+                produtos.remove(produto)
+                ProdutoDAO.salvar(produtos)
+                return
